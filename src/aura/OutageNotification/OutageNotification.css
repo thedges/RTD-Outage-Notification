@@ -1,0 +1,7 @@
+.THIS.toggle {
+    display: none;
+}
+
+.THIS .slds-textarea {
+    height: 150px;
+}

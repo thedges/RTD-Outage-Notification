@@ -1,0 +1,161 @@
+<aura:component controller="OutageNotificationController" implements="force:appHostable,forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:LightningQuickActionWithoutHeader" access="global">
+
+  <ltng:require scripts="{!$Resource.MomentJS}" />
+
+  <aura:attribute name="outage" type="Outage_Alert__c" />
+  <aura:attribute name="templateList" type="List" />
+  <aura:attribute name="templateId" type="String" />
+  <aura:attribute name="templateEmail" type="String" />
+  <aura:attribute name="templateSMS" type="String" />
+  <aura:attribute name="stop" type="Stop__c" />
+  <aura:attribute name="saveResult" type="String" />
+  <aura:attribute name="errorMsg" type="String" />
+  <aura:attribute name="Spinner" type="boolean" default="false"/>
+
+  <!-- Event Handlers -->
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <aura:if isTrue="{!v.errorMsg.length > 0}">
+      <ui:message title="Error" severity="error" closable="true">
+        {!v.errorMsg}
+      </ui:message>
+    </aura:if>
+  <div class="c-container">
+    <lightning:layout horizontalAlign="space">
+      <lightning:layoutItem flexibility="auto" padding="around-small">
+        <h3 class="slds-section-title--divider">Send Alert</h3>
+      </lightning:layoutItem>
+
+      <lightning:layoutItem flexibility="auto" padding="around-small">
+        <div class="slds-grid">
+          <div class="slds-tabs--path" role="application">
+            <ul class="slds-tabs--path__nav" role="tablist">
+              <li aura:id="detailsIndicator" class="slds-tabs--path__item slds-is-current" role="presentation">
+                <a class="slds-tabs--path__link" id="tabs-path-91" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                  <span class="slds-tabs--path__stage">
+                    <lightning:icon iconName="utility:check" size="x-small" alternativeText="Indicates approval"/>
+                  </span>
+                  <span class="slds-tabs--path__title">Details</span>
+                </a>
+              </li>
+              <li aura:id="templateIndicator" class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                <a class="slds-tabs--path__link" id="tabs-path-92" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                  <span class="slds-tabs--path__stage">
+                    <lightning:icon iconName="utility:check" size="x-small" alternativeText="Indicates approval"/>
+                  </span>
+                  <span class="slds-tabs--path__title">Edit</span>
+                </a>
+              </li>
+              <li aura:id="previewIndicator" class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                  <span class="slds-tabs--path__stage">
+                    <lightning:icon iconName="utility:check" size="x-small" alternativeText="Indicates approval"/>
+                  </span>
+                  <span class="slds-tabs--path__title">Review</span>
+                </a>
+              </li>
+              <li aura:id="confirmIndicator" class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                <a class="slds-tabs--path__link" id="tabs-path-94" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                  <span class="slds-tabs--path__stage">
+                    <lightning:icon iconName="utility:check" size="x-small" alternativeText="Indicates approval"/>
+                  </span>
+                  <span class="slds-tabs--path__title">Result</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </lightning:layoutItem>
+    </lightning:layout>
+  </div>
+
+  <div aura:id="detailsDiv">
+    <div class="slds">
+      <div>
+        <br/>
+        <lightning:input aura:id="startDateInput" type="datetime-local" name="StartDate" label="Start Date" value="{!v.outage.Begin_Date_Time__c}"/>
+        <lightning:input aura:id="endDateInput" type="datetime-local" name="EndDate" label="End Date" value="{!v.outage.End_Date_Time__c}"/>
+        <lightning:select aura:id="templateSelect" name="OutageTemplate" label="Outage Template" value="{!v.templateId}">
+          <option value=""></option>
+          <aura:iteration items="{!v.templateList}" var="rec">
+            <option value="{!rec.Id}">{!rec.Name}</option>
+          </aura:iteration>
+        </lightning:select>
+        <!--
+        <c:strike_lookup label="Outage Template" object="Outage_Template__c" searchField="Name" placeholder="Select a template" iconName="custom:custom18" order="Name" limit="5" loadingMessage="Loading..." errorMessage="Invalid input" />
+        -->
+        <c:strike_lookup aura:id="stopLookup" label="Stop" object="Stop__c" searchField="Stop_Name__c" placeholder="Select a stop" iconName="custom:custom36" order="Stop_Name__c" limit="5" loadingMessage="Loading..." errorMessage="Invalid input" value="{!v.outage.Stop__c}" />
+    
+      </div>
+    </div>
+    <br/>
+    <div>
+      <lightning:button aura:id="detailNext" label="Next" onclick="{!c.handleNextClick}" />
+    </div>
+  </div>
+
+  <div aura:id="templateDiv">
+    <div>
+       <lightning:textarea aura:id="templateEmail" name="templateEmail" label="Email Text" value="{!v.outage.Outage_Text__c}" class="emailTextArea"/>
+       <lightning:textarea aura:id="templateSMS" name="templateSMS" label="SMS Text" value="{!v.outage.Outage_SMS_Message_del__c}" class="smsTextArea"/>
+    </div>
+    <br/>
+    <div>
+      <lightning:button aura:id="templateBack" label="Back" onclick="{!c.handleBackClick}" />
+      <lightning:button aura:id="templateNext" label="Next" onclick="{!c.handleNextClick}" />
+    </div>
+  </div>
+
+  <div aura:id="previewDiv">
+    <div>
+       <lightning:textarea aura:id="templateEmail" name="templateEmail" label="Email Text" value="{!v.outage.Outage_Text__c}" class="emailTextArea" readonly="true"/>
+       <lightning:textarea aura:id="templateSMS" name="templateSMS" label="SMS Text" value="{!v.outage.Outage_SMS_Message_del__c}" class="smsTextArea" readonly="true"/>
+    </div>
+    <br/>
+    <div>
+      <lightning:button aura:id="previewBack" label="Back" onclick="{!c.handleBackClick}" />
+      <lightning:button aura:id="previewConfirm" label="Confirm and Send" onclick="{!c.handleNextClick}" />
+    </div>
+  </div>
+
+  <div aura:id="confirmDiv">
+    <aura:renderIf isTrue="{!and(v.saveResult != null, v.saveResult.length > 0)}">
+    <div class="c-container" style="padding-top:6%">
+      <lightning:layout horizontalAlign="center" verticalAlign="center">
+        <lightning:layoutItem flexibility="auto" padding="around-small" size="2">
+          {!v.body}
+        </lightning:layoutItem>
+         <lightning:layoutItem flexibility="auto" padding="around-small" size="4">
+          {!v.saveResult}
+        </lightning:layoutItem>
+      </lightning:layout>
+    </div>
+    <br/>
+    <div>
+      <lightning:layout horizontalAlign="space" verticalAlign="center">
+        <lightning:buttonGroup >
+  
+            <lightning:button label="Open Outage" onclick="{!c.navigateToRecord}" />
+         
+        </lightning:buttonGroup>
+      </lightning:layout>
+      <!-- <lightning:button aura:id="confirmBack" label="Back" onclick="{!c.handleBackClick}" /> -->
+    </div>
+     </aura:renderIf>
+     <aura:renderIf isTrue="{!or(v.saveResult == null, v.saveResult.length == 0)}">
+      <div class="c-container" style="padding-top:6%">
+      <lightning:layout horizontalAlign="center" verticalAlign="center">
+         <aura:if isTrue="{!v.Spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+       <div class="slds-spinner--brand  slds-spinner slds-spinner--large slds-is-relative" role="alert">
+         <span class="slds-assistive-text">Loading</span>
+         <div class="slds-spinner__dot-a"></div>
+         <div class="slds-spinner__dot-b"></div>
+       </div>
+    </div>
+ </aura:if>
+      </lightning:layout>
+    </div>
+     </aura:renderIf>
+  </div>
+</aura:component>
